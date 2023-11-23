@@ -1,0 +1,10 @@
+# Ignore binary dirs.
+bin/
+build/
+
+# Ignore other dirs.
+.DS_Store
+.vscode/
+
+# Ignore secrets.
+config.txt
