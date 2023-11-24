@@ -34,7 +34,7 @@ vpath %.{cpp,hpp} $(SRC_DIR)
 
 # utility rule: show SLOC
 sloc:
-	@wc -l $(MAIN_DIR)/*.cpp $(SRC_DIR)/*.{cpp,hpp}
+	@wc -l $(MAIN_DIR)/*.cpp $(SRC_DIR)/**/*.hpp $(SRC_DIR)/*.cpp
 
 # debug rule: show all targets and deps
 tell:
