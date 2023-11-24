@@ -52,9 +52,10 @@ SymbolTree::SymbolTree() {
 
 SymbolTree::~SymbolTree() {
     symbol_node_destroy(this->root);
+    this->root = nullptr;
 }
 
-const SymbolNode* SymbolTree::get_root_symbol_node() const {
+SymbolNode* SymbolTree::get_root_symbol_node() const {
     return this->root;
 }
 

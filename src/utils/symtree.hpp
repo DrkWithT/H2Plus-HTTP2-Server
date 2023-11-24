@@ -31,7 +31,7 @@ private:
 public:
     SymbolTree();
     ~SymbolTree();
-    const SymbolNode* get_root_symbol_node() const;
+    SymbolNode* get_root_symbol_node() const;
     bool put_symbol(uint32_t code, bool is_eos, uint32_t code_length, uint8_t symbol_octet);
 };
 
