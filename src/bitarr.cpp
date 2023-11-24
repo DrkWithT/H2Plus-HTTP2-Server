@@ -14,7 +14,7 @@ BitArray::BitArray() {
 
     if (this->octets != nullptr) {
         std::memset(this->octets, 0, default_capacity);
-        this->bit_capacity = default_capacity;
+        this->bit_capacity = DEFAULT_BIT_CAPACITY;
         this->bit_length = 0;
     } else {
         this->bit_capacity = -1;
@@ -33,7 +33,7 @@ BitArray::BitArray(int32_t bit_count) {
 
     if (this->octets != nullptr) {
         std::memset(this->octets, 0, checked_capacity);
-        this->bit_capacity = checked_capacity;
+        this->bit_capacity = OCTET_BITS * checked_capacity;
         this->bit_length = 0;
     } else {
         this->bit_capacity = -1;
