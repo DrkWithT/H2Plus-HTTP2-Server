@@ -78,6 +78,34 @@ OctetArray& OctetArray::operator=(const OctetArray& other) {
     return *this;
 }
 
+OctetArray& OctetArray::operator<<(const BitArray& bitarr) {
+    if (bitarr.length() < 1 || !bitarr.get_octets()) {
+        return *this;
+    }
+
+    // Reload contents of this OctetArray with the encoded octets from bit array
+    if (this->octets != nullptr) {
+        delete[] this->octets;
+        this->octets = nullptr;
+    }
+
+    const uint8_t* octet_ptr = bitarr.get_octets();
+    int32_t new_octet_capacity = bitarr.length() / 8U;
+    uint8_t* new_buffer = new uint8_t[new_octet_capacity];
+
+    if (new_buffer != nullptr) {
+        for (int i = 0; i < new_octet_capacity; i++) {
+            new_buffer[i] = octet_ptr[i];
+        }
+
+        this->octets = new_buffer;
+        this->capacity = new_octet_capacity;
+        this->length = new_octet_capacity;
+    }
+
+    return *this;
+}
+
 void OctetArray::clear() {
     if (this->octets != nullptr && this->capacity > 0) {
         std::memset(this->octets, 0, static_cast<size_t>(this->capacity));

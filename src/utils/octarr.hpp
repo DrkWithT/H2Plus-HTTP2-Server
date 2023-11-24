@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include "utils/bitarr.hpp"
 
 /**
  * @brief A flexible vector of raw, unsigned octet values aka extended ASCII.
@@ -18,6 +19,7 @@ public:
     ~OctetArray();
     OctetArray(const OctetArray& other);
     OctetArray& operator=(const OctetArray& other);
+    OctetArray& operator<<(const BitArray& bitarr);
     void clear();
     const uint8_t* get_octets() const;
     int32_t get_length() const;
