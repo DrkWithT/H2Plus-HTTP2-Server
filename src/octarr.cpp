@@ -7,7 +7,11 @@
 
 #include "utils/octarr.hpp"
 
+/* Constexprs */
+
 constexpr int32_t OCTET_ARRAY_DEFAULT_CAPACITY = 1024;
+
+/* OctetArray Impl. */
 
 OctetArray::OctetArray() {
     this->octets = new uint8_t[OCTET_ARRAY_DEFAULT_CAPACITY];
@@ -90,7 +94,7 @@ OctetArray& OctetArray::operator<<(const BitArray& bitarr) {
     }
 
     const uint8_t* octet_ptr = bitarr.get_octets();
-    int32_t new_octet_capacity = bitarr.length() / 8U;
+    int32_t new_octet_capacity = bitarr.length() / 8;
     uint8_t* new_buffer = new uint8_t[new_octet_capacity];
 
     if (new_buffer != nullptr) {
