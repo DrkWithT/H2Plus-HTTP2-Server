@@ -52,6 +52,10 @@ int32_t BitArray::length() const {
     return this->bit_length;
 }
 
+const uint8_t* BitArray::get_octets() const {
+    return this->octets;
+}
+
 bool BitArray::at(int32_t bit_pos) {
     int32_t octet_pos = bit_pos / OCTET_BITS;
     uint32_t bit_offset = bit_pos - (OCTET_BITS * octet_pos);
