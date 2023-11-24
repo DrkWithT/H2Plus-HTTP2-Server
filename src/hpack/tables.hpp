@@ -76,7 +76,7 @@ const HeaderTablePair STATIC_HEADER_TABLE[] = {
 };
 
 // Static Huffman Code Table: encoding and bit count)
-// Credits: The "scapy" repository from GitHub for HTTP/2 testing and RFC 7540.
+// Credits: The "scapy" repository from GitHub for HTTP/2 testing and RFC 7541.
 const HuffmanCodePair STATIC_HUFFMAN_CODES[] = {
     {0x1ff8, 13},
     {0x7fffd8, 23},
