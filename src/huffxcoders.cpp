@@ -30,14 +30,14 @@ uint32_t HuffmanEncoder::encode(BitArray& result, const std::string& text) {
     for (uint32_t i = 0U; i < checked_text_length; i++) {
         uint8_t symbol = static_cast<uint8_t>(text[i]);
         uint32_t huffcode = this->huffcodes_ptr[symbol].code_number;
-        uint32_t huffbits = this->huffcodes_ptr[symbol].code_length - 1;
-        uint32_t huffcode_bitmask = 1U << huffbits;
+        uint32_t huffbits = this->huffcodes_ptr[symbol].code_length;
+        uint32_t huffcode_bitmask = 1U << (huffbits - 1);
 
-        for (uint32_t bitmask_i = 0; bitmask_i <= huffbits; bitmask_i++) {
-            bool bit_flag = 1U == ((huffcode & huffcode_bitmask) >> (huffbits - bitmask_i));
+        for (uint32_t bitmask_i = 0; bitmask_i < huffbits; bitmask_i++) {
+            bool bit_flag = 1U == ((huffcode & huffcode_bitmask) >> (huffbits - (bitmask_i + 1)));
     
             if (!result.append(bit_flag)) {
-                encode_count = 0U; // On allocation error in append, exit early with failed encode count 0. 
+                encode_count = 0U; // On allocation error in append, exit early with failed encode count 0.
                 return encode_count;
             }
 
@@ -50,14 +50,14 @@ uint32_t HuffmanEncoder::encode(BitArray& result, const std::string& text) {
 
     /// @note If encode_count is on an octet boundary, place padding of 1's until so. This caps an "EOS" symbol (all ones) to the Huffman encoded bitstring.
     if (padding_count != OCTET_BITS) {
-        for (int32_t eos_i = 0U; eos_i < padding_count; eos_i++) {
+        for (uint32_t eos_i = 0U; eos_i < padding_count; eos_i++) {
             if (!result.append(true)) {
                 encode_count = 0U;
                 return encode_count;
             }
-        }
 
-        encode_count++;
+            encode_count++;
+        }
     }
     
     return encode_count;
@@ -68,7 +68,7 @@ uint32_t HuffmanEncoder::encode(BitArray& result, const std::string& text) {
 HuffmanDecoder::HuffmanDecoder(const HuffmanCodePair* huffcodes) : huffcode_tree {} {
     this->is_ready = true;
 
-    for (uint8_t huffcode_i = 0; huffcode_i < HUFFCODE_PAIR_COUNT; huffcode_i++) {
+    for (uint32_t huffcode_i = 0U; huffcode_i < HUFFCODE_PAIR_COUNT; huffcode_i++) {
         if (!load_huffcode(&huffcodes[huffcode_i], huffcode_i)) {
             this->is_ready = false;
             break;
@@ -87,14 +87,19 @@ bool HuffmanDecoder::setup_valid() const {
 }
 
 bool HuffmanDecoder::decode(std::string& result, const OctetArray& raw_octets) {
-    uint32_t data_length = raw_octets.get_length();
+    int32_t data_length = raw_octets.get_length();
+
+    // Do not attempt to decode into invalid OctetArray data e.g length = -1
+    if (data_length < 1) {
+        return false;
+    }
+
     BitArray result_bitstr {OCTET_BITS * data_length};
     bool curr_bit = false;
     bool decode_ok = true;
 
     // Copy all bits of `raw_octets` into `result_bitstr`
-    for (uint32_t copy_i = 0U; copy_i < data_length; copy_i++) {
-        uint8_t bitmask_n = 128;
+    for (int32_t copy_i = 0; copy_i < data_length; copy_i++) {
         const uint8_t temp_octet = raw_octets.get_octet(copy_i);
 
         // Append each octet as 8 bit chunk
@@ -108,7 +113,7 @@ bool HuffmanDecoder::decode(std::string& result, const OctetArray& raw_octets) {
     int32_t result_bit_span = result_bitstr.length();
     uint8_t node_symbol = 0;
 
-    for (uint32_t peek_i = 0; peek_i < result_bit_span; peek_i++) {
+    for (int32_t peek_i = 0; peek_i < result_bit_span; peek_i++) {
         if (!this->tree_cursor) {
             break;
         }
@@ -144,38 +149,8 @@ void HuffmanDecoder::reset_cursor() {
 }
 
 bool HuffmanDecoder::load_huffcode(const HuffmanCodePair* huffcode, uint8_t symbol) {
-    SymbolNode* temp_cursor = this->huffcode_tree.get_root_symbol_node();
     uint32_t temp_huffcode = huffcode->code_number;
-    uint32_t code_span = huffcode->code_length - 1;
-    uint32_t bitmask = 1U << code_span;
-    bool has_eos = symbol == static_cast<uint8_t>(HUFFCODE_PAIR_COUNT - 1U);
+    uint32_t code_span = huffcode->code_length;
 
-    for (int32_t bit_i = 0; bit_i <= code_span; bit_i++) {
-        // Decodes bit flag from `temp_huffcode`
-        bool bit_flag = (temp_huffcode & bitmask) >> (code_span - bit_i);
-        uint8_t curr_symbol = 0;
-        
-        // When the path finishes, prepare to insert symbol
-        if (bit_i == code_span) {
-            curr_symbol = symbol;
-        }
-
-        // Expand the tree with each code-path
-        if (bit_flag) {
-            if (!temp_cursor->right) {
-                temp_cursor->right = symbol_node_create(curr_symbol, has_eos, nullptr, nullptr);
-            }
-
-            temp_cursor = temp_cursor->right;
-        } else {
-            if (!temp_cursor->left) {
-                temp_cursor->left = symbol_node_create(curr_symbol, has_eos, nullptr, nullptr);
-            }
-
-            temp_cursor = temp_cursor->left;
-        }
-
-        // Advance forward on bitstring for path
-        bitmask >>= 1;
-    }
+    return this->huffcode_tree.put_symbol(temp_huffcode, code_span, symbol);
 }

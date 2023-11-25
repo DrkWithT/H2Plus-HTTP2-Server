@@ -22,6 +22,7 @@ public:
     ~BitArray();
 
     int32_t length() const;
+    const uint8_t* get_octets() const;
 
     bool at(int32_t bit_pos);
     void put(int32_t bit_pos, bool bit);

@@ -59,34 +59,40 @@ SymbolNode* SymbolTree::get_root_symbol_node() const {
     return this->root;
 }
 
-bool SymbolTree::put_symbol(uint32_t code, bool is_eos, uint32_t code_length, uint8_t symbol_octet) {
+bool SymbolTree::put_symbol(uint32_t code, uint32_t code_length, uint8_t symbol_octet) {
     bool has_placed = true;
-    SymbolNode* temp_cursor = this->root;
+    SymbolNode* temp_cursor = get_root_symbol_node();
     bool has_new_eos = code == HPACK_HUFFCODE_EOS;
-    uint32_t code_bitmask = 1 << (code_length - 1);
+    uint32_t code_bitmask = 1U << (code_length - 1U);
 
-    for (int i = 0; i < code_length; i++){
+    // Special Case: place new root if no root is found!
+    if (!temp_cursor) {
+        this->root = symbol_node_create(symbol_octet, has_new_eos, nullptr, nullptr);
+        return this->root != nullptr;
+    }
+
+    for (uint32_t i = 0; i < code_length; i++) {
         // Track current position in bitstring of Huffman code.
         bool bit_flag = 1 == ((code & code_bitmask) >> (code_length - (i + 1)));
         uint8_t symbol = 0;
 
-        if (i == code_length - 1) {
+        if (i == code_length - 1U) {
             // Prepare to place symbol at end of path.
             symbol = symbol_octet;
         }
 
         if (bit_flag) {
-            if (!temp_cursor->left) {
-                temp_cursor->left = symbol_node_create(symbol, is_eos, nullptr, nullptr);
-            }
-
-            temp_cursor = temp_cursor->left;
-        } else {
             if (!temp_cursor->right) {
-                temp_cursor->right = symbol_node_create(symbol, is_eos, nullptr, nullptr);
+                temp_cursor->right = symbol_node_create(symbol, has_new_eos, nullptr, nullptr);
             }
 
             temp_cursor = temp_cursor->right;
+        } else {
+            if (!temp_cursor->left) {
+                temp_cursor->left = symbol_node_create(symbol, has_new_eos, nullptr, nullptr);
+            }
+
+            temp_cursor = temp_cursor->left;
         }
 
         if (!temp_cursor) {
@@ -97,6 +103,8 @@ bool SymbolTree::put_symbol(uint32_t code, bool is_eos, uint32_t code_length, ui
 
         code_bitmask >>= 1;
     }
+
+    has_placed = temp_cursor != nullptr;
 
     return has_placed;
 }
