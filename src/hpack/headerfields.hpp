@@ -20,7 +20,7 @@ enum HeaderFieldType : uint8_t {
  * @brief Tagged struct for any HTTP/2 header field block.
  */
 struct HeaderField {
-    union data {
+    union HeaderFieldContents {
         struct {
             uint8_t index;
         } field_ai; // name and value is entirely indexable
@@ -62,7 +62,7 @@ struct HeaderField {
             uint16_t name_length;
             uint16_t value_length;
         } field_nvi_nmn; // header by RFC 7541 6.2.3b
-    };
+    } data;
 
     HeaderFieldType type;
 };
