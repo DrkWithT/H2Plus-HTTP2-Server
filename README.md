@@ -15,11 +15,12 @@ A simple HTTP/2 cleartext server made with C++. The purpose of this project is t
 ### Todos
  1. ~~Make special collections: BitArray, Prefix BT~~
  2. ~~HPACK Huffman encoder & decoder.~~
- 3. <u>HPACK string and integer encoder & decoder.</u>
- 4. Make HPACK context class.
- 5. Make HTTP/2 streams and other utils.
- 6. Create server workers.
- 7. Create server driver.
- 8. Put together thread pool implementation.
- 9. Finish up driver class of server.
- 10. Test with cURL.
+ 3. _HPACK header indexing table (static, dynamic)._
+ 4. HPACK string and integer encoder & decoder.
+ 5. Make HPACK context class.
+ 6. Make HTTP/2 streams and other utils.
+ 7. Create server workers.
+ 8. Create server driver.
+ 9. Put together thread pool implementation.
+ 10. Finish up driver class of server.
+ 11. Test with cURL.
