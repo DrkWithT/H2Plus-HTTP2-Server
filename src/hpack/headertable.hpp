@@ -4,6 +4,14 @@
 #include <deque>
 #include "hpack/tables.hpp"
 
+constexpr size_t ENTRY_OVERHEAD = 32UL;
+constexpr uint32_t STATIC_TABLE_LENGTH = 61UL;
+constexpr size_t TABLE_DEFAULT_SIZE = 4096UL;
+
+constexpr size_t compute_entry_overhead(const HeaderTablePair& entry) {
+    return ENTRY_OVERHEAD + entry.get_name().length() + entry.get_value().length();
+}
+
 // A lookup table for compressing common headers by index.
 const HeaderTablePair STATIC_HEADER_TABLE[] = {
     {":authority", ""},
@@ -67,6 +75,24 @@ const HeaderTablePair STATIC_HEADER_TABLE[] = {
     {"vary", ""},
     {"via", ""},
     {"www-authenticate", ""},
+};
+
+class HeaderIndexingTable {
+private:
+    std::deque<HeaderTablePair> dynamic_table; // dynamic header field table
+    const HeaderTablePair* static_table; // ptr to static array of header field classes
+    size_t table_capacity; // maximum dynamic entry memory in octets permitted
+    size_t table_size; // current dynamic entry memory in octets
+    uint32_t static_length; // item count of static table
+    uint32_t dynamic_length; // item count of dynamic table
+
+    bool has_entry(const std::string& name) const;
+public:
+    HeaderIndexingTable();
+    bool is_full() const;
+    void update_capacity(size_t new_capacity);
+    const HeaderTablePair& get_entry(uint32_t index) const;
+    void put_entry(const HeaderTablePair& entry);
 };
 
 #endif
