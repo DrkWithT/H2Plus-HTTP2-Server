@@ -6,7 +6,7 @@
 CXX := g++ -std=c++17
 CXXFLAGS := -Wall -Wextra -Werror
 
-ifdef DEBUG_BUILD
+ifeq ($(DEBUG_BUILD),1)
 	CXXFLAGS += -g
 else
 	CXXFLAGS += -O2
