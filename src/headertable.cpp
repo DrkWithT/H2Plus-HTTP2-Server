@@ -17,15 +17,22 @@ HeaderIndexingTable::HeaderIndexingTable() : dynamic_table {} {
     this->dynamic_length = 0U;
 }
 
+size_t HeaderIndexingTable::get_size() const {
+    return this->table_size;
+}
+
+uint32_t HeaderIndexingTable::get_total_length() const {
+    return this->dynamic_length + this->static_length;
+}
+
 bool HeaderIndexingTable::is_full() const {
     return this->table_size >= table_capacity;
 }
 
 void HeaderIndexingTable::update_capacity(size_t new_capacity) {
     /// @todo 1: The risk is that the new_capacity may be too large from the client's wishes. I should put an implementation defined hard limit on this value.
-    /// @todo 2: The other code smell here is the repeated entry eviction code. I should pull that out into a method.
  
-    uint32_t temp_dyntable_length = this->static_length + this->dynamic_length; // temp copy of dynamic entry count
+    uint32_t temp_dyntable_length = this->dynamic_length; // temp copy of dynamic entry count
     size_t temp_dyntable_size = this->table_size; // copy of total table size
     size_t temp_entry_size = 0UL; // temp size of evicting entry
 
@@ -56,6 +63,16 @@ void HeaderIndexingTable::update_capacity(size_t new_capacity) {
     }
 }
 
+bool HeaderIndexingTable::has_entry(const std::string& name) const {
+    for (auto& item : this->dynamic_table) {
+        if (item.get_name() == name) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 const HeaderTablePair& HeaderIndexingTable::get_entry(uint32_t index) const {
     uint32_t curr_static_length = this->static_length;
     uint32_t real_index = (index != 0U) ? index - 1U : 0U;
@@ -84,16 +101,4 @@ void HeaderIndexingTable::put_entry(const HeaderTablePair& entry) {
         this->table_size -= entry_overhead;
         this->dynamic_length--;
     }
-}
-
-/* Private HeaderIndexingTable Impl. */
-
-bool HeaderIndexingTable::has_entry(const std::string& name) const {
-    for (auto& item : this->dynamic_table) {
-        if (item.get_name() == name) {
-            return true;
-        }
-    }
-
-    return false;
 }

@@ -86,11 +86,13 @@ private:
     uint32_t static_length; // item count of static table
     uint32_t dynamic_length; // item count of dynamic table
 
-    bool has_entry(const std::string& name) const;
 public:
     HeaderIndexingTable();
+    size_t get_size() const;
+    uint32_t get_total_length() const;
     bool is_full() const;
     void update_capacity(size_t new_capacity);
+    bool has_entry(const std::string& name) const;
     const HeaderTablePair& get_entry(uint32_t index) const;
     void put_entry(const HeaderTablePair& entry);
 };
