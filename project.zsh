@@ -1,13 +1,14 @@
 # project.zsh
 # By: Derek Tan
 
-debug_option='y'
-debug_flag=1
+debug_option='y';
+debug_flag=1;
 
 # prompt for build mode
 read -p "Do debug build (y/n)? " debug_option
 
-if [[ $debug_option == "y" -or $debug_flag -eq 1 ]] then
+if [[ $debug_option == "y" || $debug_flag -eq 1 ]]
+then
     debug_flag=1
 else
     debug_flag=0
