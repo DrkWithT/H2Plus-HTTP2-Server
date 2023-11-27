@@ -88,10 +88,8 @@ OctetArray& OctetArray::operator<<(const BitArray& bitarr) {
     }
 
     // Reload contents of this OctetArray with the encoded octets from bit array
-    if (this->octets != nullptr) {
-        delete[] this->octets;
-        this->octets = nullptr;
-    }
+    delete[] this->octets;
+    this->octets = nullptr;
 
     const uint8_t* octet_ptr = bitarr.get_octets();
     int32_t new_octet_capacity = bitarr.length() / 8;

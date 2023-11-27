@@ -4,7 +4,13 @@
 
 # compiler vars
 CXX := g++ -std=c++17
-CXXFLAGS := -Wall -Wextra -Werror -g
+CXXFLAGS := -Wall -Wextra -Werror
+
+ifeq ($(DEBUG_BUILD),1)
+	CXXFLAGS += -g
+else
+	CXXFLAGS += -O2
+endif
 
 # executable dir
 BIN_DIR := ./bin
@@ -69,4 +75,4 @@ $(BUILD_DIR)/%.o: $(MAIN_DIR)/%.cpp
 
 # clean rule: only remove old executables!
 clean:
-	rm -f $(EXECS) $(BUILD_DIR)/*.o
+	rm -f $(EXECS)
