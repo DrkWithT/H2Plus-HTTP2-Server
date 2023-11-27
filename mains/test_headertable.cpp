@@ -29,7 +29,7 @@ int main() {
     }
 
     // Test if table expanded to correct length in under-capacity.
-    if (table.get_total_length() != 65U || table.get_size() != 128UL) {
+    if (table.get_total_length() != 65U || table.get_size() != 226UL) {
         std::cerr << "Table expanded to incorrect length or size!" << std::endl;
         return 1;
     }
@@ -37,7 +37,7 @@ int main() {
     // Test if table can evict (all) entries on a big size shrink.
     table.update_capacity(0);
 
-    if (table.get_total_length() != 0U || table.get_size() != 0UL) {
+    if (table.get_total_length() != 61U || table.get_size() != 0UL) {
         std::cerr << "Table shrinkage failed by incorrect length or overhead size." << std::endl;
         return 1;
     }

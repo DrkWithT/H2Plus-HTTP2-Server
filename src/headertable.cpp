@@ -91,6 +91,7 @@ void HeaderIndexingTable::put_entry(const HeaderTablePair& entry) {
 
     this->dynamic_table.push_front(entry);
     this->table_size += entry_overhead;
+    this->dynamic_length++;
 
     // If the table passes its memory capacity again, evict entries until size is OK
     while (this->is_full()) {
