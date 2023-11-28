@@ -119,3 +119,10 @@ bool BitArray::append(uint8_t octet) {
 
     return true;
 }
+
+void BitArray::clear() {
+    int32_t octet_count = this->bit_capacity / OCTET_BITS;
+    std::memset(this->octets, 0, sizeof(uint8_t) * octet_count);
+
+    this->bit_length = 0;
+}

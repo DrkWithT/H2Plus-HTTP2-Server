@@ -28,6 +28,7 @@ public:
     void put(int32_t bit_pos, bool bit);
     bool append(bool bit);
     bool append(uint8_t octet);
+    void clear();
 };
 
 #endif
