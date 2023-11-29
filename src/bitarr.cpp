@@ -7,6 +7,12 @@
 
 #include "utils/bitarr.hpp"
 
+/* Constants */
+
+constexpr int OCTET_BITS = 8; // bits per octet
+constexpr int MAX_OCTET_N = 7; // max bit place in octet
+constexpr uint32_t DEFAULT_BIT_CAPACITY = 4096; // bits for a default `BitArray`
+
 BitArray::BitArray() {
     const int32_t default_capacity = DEFAULT_BIT_CAPACITY / OCTET_BITS;
     
@@ -15,15 +21,15 @@ BitArray::BitArray() {
     if (this->octets != nullptr) {
         std::memset(this->octets, 0, default_capacity);
         this->bit_capacity = DEFAULT_BIT_CAPACITY;
-        this->bit_length = 0;
+        this->bit_length = 0U;
     } else {
-        this->bit_capacity = -1;
-        this->bit_length = -1;
+        this->bit_capacity = 0U;
+        this->bit_length = 0U;
     }
 }
 
-BitArray::BitArray(int32_t bit_count) {
-    int32_t checked_capacity = (bit_count < DEFAULT_BIT_CAPACITY)
+BitArray::BitArray(uint32_t bit_count) {
+    uint32_t checked_capacity = (bit_count < DEFAULT_BIT_CAPACITY)
         ? DEFAULT_BIT_CAPACITY
         : bit_count;
     
@@ -48,7 +54,7 @@ BitArray::~BitArray() {
     }
 }
 
-int32_t BitArray::length() const {
+uint32_t BitArray::length() const {
     return this->bit_length;
 }
 
@@ -56,7 +62,7 @@ const uint8_t* BitArray::get_octets() const {
     return this->octets;
 }
 
-bool BitArray::at(int32_t bit_pos) {
+bool BitArray::at(uint32_t bit_pos) {
     int32_t octet_pos = bit_pos / OCTET_BITS;
     uint32_t bit_offset = bit_pos - (OCTET_BITS * octet_pos);
     uint8_t octet = this->octets[octet_pos];
@@ -64,7 +70,7 @@ bool BitArray::at(int32_t bit_pos) {
     return 1 == ((octet & (128 >> bit_offset)) >> (MAX_OCTET_N - bit_offset));
 }
 
-void BitArray::put(int32_t bit_pos, bool bit)
+void BitArray::put(uint32_t bit_pos, bool bit)
 {
     int32_t octet_pos = bit_pos / OCTET_BITS;
     uint8_t bit_offset = static_cast<uint8_t>(bit_pos - (OCTET_BITS * octet_pos));
@@ -79,13 +85,13 @@ bool BitArray::append(bool bit) {
         return false;
     }
 
-    int32_t curr_bit_length = this->bit_length;
-    int32_t curr_bit_capacity = this->bit_capacity;
-    int32_t new_bit_capacity = 2 * curr_bit_capacity;
+    uint32_t curr_bit_length = this->bit_length;
+    uint32_t curr_bit_capacity = this->bit_capacity;
+    uint32_t new_bit_capacity = 2U * curr_bit_capacity;
 
     if (curr_bit_length >= curr_bit_capacity) {
-        int32_t new_octet_capacity = new_bit_capacity / OCTET_BITS;
-        int32_t old_octet_capacity = curr_bit_capacity / OCTET_BITS;
+        uint32_t new_octet_capacity = new_bit_capacity / OCTET_BITS;
+        uint32_t old_octet_capacity = curr_bit_capacity / OCTET_BITS;
         uint8_t* new_bitbuf = new uint8_t[new_octet_capacity];
 
         if (new_bitbuf != nullptr) {

@@ -20,8 +20,8 @@ OctetArray::OctetArray() {
         this->capacity = OCTET_ARRAY_DEFAULT_CAPACITY;
         this->length = 0;
     } else {
-        this->capacity = -1;
-        this->length = -1;
+        this->capacity = 0;
+        this->length = 0;
     }
 }
 
@@ -83,7 +83,7 @@ OctetArray& OctetArray::operator=(const OctetArray& other) {
 }
 
 OctetArray& OctetArray::operator<<(const BitArray& bitarr) {
-    if (bitarr.length() < 1 || !bitarr.get_octets()) {
+    if (bitarr.length() < 1U || !bitarr.get_octets()) {
         return *this;
     }
 
@@ -118,15 +118,15 @@ const uint8_t* OctetArray::get_octets() const {
     return this->octets;
 }
 
-int32_t OctetArray::get_length() const {
+uint32_t OctetArray::get_length() const {
     return this->length;
 }
 
-uint8_t OctetArray::get_octet(int32_t index) const {
+uint8_t OctetArray::get_octet(uint32_t index) const {
     return this->octets[index];
 }
 
-void OctetArray::set_octet(int32_t index, uint8_t value) {
+void OctetArray::set_octet(uint32_t index, uint8_t value) {
     if (index >= 0 && index < this->get_length()) {
         this->octets[index] = value;
     }

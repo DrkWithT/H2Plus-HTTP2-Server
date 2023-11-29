@@ -12,8 +12,8 @@ class OctetArray
 {
 private:
     uint8_t* octets;
-    int32_t length;
-    int32_t capacity;
+    uint32_t length;
+    uint32_t capacity;
 public:
     OctetArray();
     ~OctetArray();
@@ -22,9 +22,9 @@ public:
     OctetArray& operator<<(const BitArray& bitarr);
     void clear();
     const uint8_t* get_octets() const;
-    int32_t get_length() const;
-    uint8_t get_octet(int32_t index) const;
-    void set_octet(int32_t index, uint8_t value);
+    uint32_t get_length() const;
+    uint8_t get_octet(uint32_t index) const;
+    void set_octet(uint32_t index, uint8_t value);
 };
 
 #endif
