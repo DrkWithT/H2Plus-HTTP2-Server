@@ -5,11 +5,12 @@
  * @date 2023-11-22
  */
 
+#include <algorithm>
 #include "utils/octarr.hpp"
 
 /* Constexprs */
 
-constexpr int32_t OCTET_ARRAY_DEFAULT_CAPACITY = 1024;
+constexpr uint32_t OCTET_ARRAY_DEFAULT_CAPACITY = 1024;
 
 /* OctetArray Impl. */
 
@@ -17,10 +18,25 @@ OctetArray::OctetArray() {
     this->octets = new uint8_t[OCTET_ARRAY_DEFAULT_CAPACITY];
 
     if (this->octets != nullptr) {
-        this->capacity = OCTET_ARRAY_DEFAULT_CAPACITY;
-        this->length = 0;
+        this->length = static_cast<uint32_t>(OCTET_ARRAY_DEFAULT_CAPACITY);
+        std::fill_n(this->octets, this->length, 0);
     } else {
-        this->capacity = 0;
+        this->length = 0;
+    }
+}
+
+OctetArray::OctetArray(uint32_t capacity)
+{
+    uint32_t checked_capacity = (capacity >= OCTET_ARRAY_DEFAULT_CAPACITY)
+        ? capacity
+        : OCTET_ARRAY_DEFAULT_CAPACITY;
+
+    this->octets = new uint8_t[checked_capacity];
+
+    if (this->octets != nullptr) {
+        this->length = checked_capacity;
+        std::fill_n(this->octets, this->length, 0);
+    } else {
         this->length = 0;
     }
 }
@@ -42,16 +58,14 @@ OctetArray::OctetArray(const OctetArray& other) {
         this->octets = nullptr;
     }
 
-    int32_t other_capacity = other.capacity;
+    int32_t other_capacity = other.get_length();
+    const uint8_t* other_data = other.get_octets();
     uint8_t* new_buffer = new uint8_t[other_capacity];
 
     if (new_buffer != nullptr) {
-        for (int i = 0; i < other_capacity; i++) {
-            new_buffer[i] = other.get_octet(i);
-        }
+        std::copy_n(other_data, other_capacity, new_buffer);
 
         this->octets = new_buffer;
-        this->capacity = other_capacity;
         this->length = other.get_length();
     }
 }
@@ -66,7 +80,7 @@ OctetArray& OctetArray::operator=(const OctetArray& other) {
         this->octets = nullptr;
     }
 
-    int32_t other_capacity = other.capacity;
+    int32_t other_capacity = other.get_length();
     uint8_t* new_buffer = new uint8_t[other_capacity];
 
     if (new_buffer != nullptr) {
@@ -75,7 +89,6 @@ OctetArray& OctetArray::operator=(const OctetArray& other) {
         }
 
         this->octets = new_buffer;
-        this->capacity = other_capacity;
         this->length = other.get_length();
     }
 
@@ -91,17 +104,14 @@ OctetArray& OctetArray::operator<<(const BitArray& bitarr) {
     delete[] this->octets;
     this->octets = nullptr;
 
-    const uint8_t* octet_ptr = bitarr.get_octets();
+    const uint8_t* other_data = bitarr.get_octets();
     int32_t new_octet_capacity = bitarr.length() / 8;
     uint8_t* new_buffer = new uint8_t[new_octet_capacity];
 
     if (new_buffer != nullptr) {
-        for (int i = 0; i < new_octet_capacity; i++) {
-            new_buffer[i] = octet_ptr[i];
-        }
+        std::copy_n(other_data, new_octet_capacity, new_buffer);
 
         this->octets = new_buffer;
-        this->capacity = new_octet_capacity;
         this->length = new_octet_capacity;
     }
 
@@ -109,8 +119,8 @@ OctetArray& OctetArray::operator<<(const BitArray& bitarr) {
 }
 
 void OctetArray::clear() {
-    if (this->octets != nullptr && this->capacity > 0) {
-        std::memset(this->octets, 0, static_cast<size_t>(this->capacity));
+    if (this->octets != nullptr) {
+        std::memset(this->octets, 0, static_cast<size_t>(this->length));
     }
 }
 

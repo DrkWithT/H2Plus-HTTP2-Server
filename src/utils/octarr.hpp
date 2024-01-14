@@ -13,9 +13,9 @@ class OctetArray
 private:
     uint8_t* octets;
     uint32_t length;
-    uint32_t capacity;
 public:
     OctetArray();
+    OctetArray(uint32_t capacity);
     ~OctetArray();
     OctetArray(const OctetArray& other);
     OctetArray& operator=(const OctetArray& other);
