@@ -1,21 +1,23 @@
 # run_tests.zsh
 # Derek Tan
 
-pass_count=0
-fail_count=0
 test_prgm_name=''
+
+# Clear debug log to remove obsolete info.
+echo "" > debug_log.txt
 
 # Run all unit test programs and track how many pass / fail.
 for prgm in $(find -f ./bin/test_*);
 do
-    exec $prgm
+    # Log debug msgs of stdout and stderr. 
+    exec $prgm >> debug_log.txt 2>&1
 
-    # Use an arithmetic expansion to increment pass/fail counts.
+    # Print test prgm statuses.
     if [[ $? -eq 0 ]]
     then
-        pass_count=$((pass_count + 1))
+        echo -e "\033[0;32mPASS: $prgm\033[0m\n"
     else
-        fail_count=$((fail_count + 1))
+        echo -e "\033[0;31mFAIL: $prgm\033[0m\n"
     fi
 done
 
