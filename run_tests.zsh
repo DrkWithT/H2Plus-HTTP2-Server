@@ -8,7 +8,7 @@ test_prgm_name=''
 # Run all unit test programs and track how many pass / fail.
 for prgm in $(find -f ./bin/test_*);
 do
-    exec $test_prgm_name
+    exec $prgm
 
     # Use an arithmetic expansion to increment pass/fail counts.
     if [[ $? -eq 0 ]]

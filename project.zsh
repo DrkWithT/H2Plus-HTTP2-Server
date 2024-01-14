@@ -7,7 +7,7 @@ debug_flag=1;
 # prompt for build mode
 read -p "Do debug build (y/n)? " debug_option
 
-if [[ $debug_option == "y" || $debug_flag -eq 1 ]]
+if [[ $debug_option == "y" ]]
 then
     debug_flag=1
 else
