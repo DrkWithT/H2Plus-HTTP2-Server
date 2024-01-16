@@ -20,6 +20,7 @@ private:
     uint32_t encoding_count; // stores total offset of octets from start of overall encoding
 public:
     IntegerEncoder();
+    uint32_t get_relative_offset() const;
     void set_prefix(uint32_t prefix_n);
     void set_offset(uint32_t offset);
     uint32_t encode_int(OctetArray& buffer, uint32_t target);
@@ -35,6 +36,7 @@ private:
     uint8_t prefix;          // N-bit prefix of integer to decode
 public:
     IntegerDecoder();
+    uint32_t get_relative_offset() const;
     void set_offset(uint32_t offset);
     void set_prefix(uint8_t prefix_n);
     uint32_t decode_int(const OctetArray& buffer);

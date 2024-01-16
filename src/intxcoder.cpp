@@ -27,6 +27,11 @@ IntegerEncoder::IntegerEncoder() {
     encoding_count = 0U;
 }
 
+uint32_t IntegerEncoder::get_relative_offset() const
+{
+    return encoding_count;
+}
+
 void IntegerEncoder::set_prefix(uint32_t prefix_n) {
     this->prefix = prefix_n;
 }
@@ -54,14 +59,16 @@ uint32_t IntegerEncoder::encode_int(OctetArray& buffer, uint32_t target) {
         return encoding_count;
     }
 
-    temp_octet = target_accumulator;
+    /// @note Unconditionally encode the 1st octet of the integer in an N bit prefix to follow the RFC.
+    temp_octet = prefix_mask;
     buffer.set_octet(encoding_count, temp_octet);
     encoding_count++;
 
     target_accumulator -= prefix_mask;
 
+    /// @note Follows RFC 7541 5.1 pseudocode for correct encoding of middle octets in the encoding.
     while (target_accumulator >= HPACK_TERMINAL_TINY_INT) {
-        if (encoding_count > buffer.get_length()) {
+        if (encoding_count >= buffer.get_length()) {
             // Reject excessive octet counts in encoding to avoid buffer overflow.
             encoding_count = 0U;
             break;
@@ -76,6 +83,10 @@ uint32_t IntegerEncoder::encode_int(OctetArray& buffer, uint32_t target) {
         encoding_count++;
     }
 
+    /// @note Put and then skip the last encoded octet of integer since loop terminates 1 iteration early.
+    buffer.set_octet(encoding_count, (target_accumulator & HPACK_INT_CHUNK_VALUE));
+    encoding_count++;
+
     return encoding_count;
 }
 
@@ -84,6 +95,11 @@ uint32_t IntegerEncoder::encode_int(OctetArray& buffer, uint32_t target) {
 IntegerDecoder::IntegerDecoder() {
     decoding_offset = 0U;
     prefix = 0U;
+}
+
+uint32_t IntegerDecoder::get_relative_offset() const
+{
+    return decoding_offset;
 }
 
 void IntegerDecoder::set_offset(uint32_t offset) {
@@ -97,24 +113,24 @@ void IntegerDecoder::set_prefix(uint8_t prefix_n) {
 uint32_t IntegerDecoder::decode_int(const OctetArray& buffer) {
     uint32_t result = 0U;
     uint8_t prefix_mask = get_prefix_mask(prefix);
-    uint8_t temp_chunk = buffer.get_octet(decoding_offset);
+    uint8_t temp_chunk = buffer.get_octet(decoding_offset) & prefix_mask;
 
     if (temp_chunk != prefix_mask) {
         /// @note Handles 1 octet integers where no additional chunks need to be decoded!
-        result = temp_chunk & prefix_mask;
+        result = temp_chunk;
         decoding_offset++;
         return result;
     }
 
     uint8_t temp_octet = 0; // raw octet from buffer
     uint32_t chunk_count = 0U;
-    uint32_t multiplier = 1; // power of 2 to multiply with result accumulator term
-    result = temp_chunk & prefix_mask;
+    uint32_t multiplier = 1U; // power of 2 to multiply with result accumulator term
+    result = temp_chunk;
     decoding_offset++;
 
     while (decoding_offset < buffer.get_length() && chunk_count <= HPACK_MAX_INT_OCTETS) {
         temp_octet = buffer.get_octet(decoding_offset);
-        temp_chunk = HPACK_INT_CHUNK_VALUE & temp_octet;
+        temp_chunk = temp_octet & HPACK_INT_CHUNK_VALUE;
 
         result += temp_chunk * multiplier;
 
@@ -132,6 +148,7 @@ uint32_t IntegerDecoder::decode_int(const OctetArray& buffer) {
         }
 
         multiplier <<= 7;
+        decoding_offset++;
     }
 
     return result;
