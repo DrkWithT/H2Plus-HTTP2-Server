@@ -11,18 +11,20 @@
 
 /// @brief Special constant for encoding any "larger" integer in HPACK.
 constexpr uint32_t HPACK_TERMINAL_TINY_INT = 128U;
+constexpr uint32_t HPACK_INT_CHUNK_VALUE = 127U;
+constexpr uint32_t HPACK_MAX_INT_OCTETS = 8U;
 
 /* Helper Impl. */
 
-constexpr bool is_target_tiny(uint8_t prefix_n, uint8_t head_octet) {
-    return head_octet < (1 << prefix_n) - 1;
+constexpr uint8_t get_prefix_mask(uint8_t prefix_n) {
+    return (1 << prefix_n) - 1;
 }
 
 /* IntegerEncoder Impl. */
 
 IntegerEncoder::IntegerEncoder() {
-    this->prefix = 0U;
-    this->encoding_offset = 0U;
+    prefix = 0U;
+    encoding_count = 0U;
 }
 
 void IntegerEncoder::set_prefix(uint32_t prefix_n) {
@@ -30,85 +32,62 @@ void IntegerEncoder::set_prefix(uint32_t prefix_n) {
 }
 
 void IntegerEncoder::set_offset(uint32_t offset) {
-    this->encoding_offset = offset;
+    this->encoding_count = offset;
 }
 
 void IntegerEncoder::reset() {
-    this->set_prefix(0U);
-    this->encoding_offset = 0U;
+    set_prefix(0U);
+    encoding_count = 0U;
 }
 
 uint32_t IntegerEncoder::encode_int(OctetArray& buffer, uint32_t target) {
     /// @todo Review RFC 7541 Section 5.1 for pseudocode!
-    if (!this->encode_tiny_int(buffer, target)) {
-        this->encode_big_int(buffer, target);
-    }
-
-    return this->encoding_offset;
-}
-
-/* IntegerEncoder Private Impl. */
-
-bool IntegerEncoder::encode_tiny_int(OctetArray& buffer, uint32_t target) {
-    uint8_t tiny_int = target & ((1 << this->prefix) - 1);
-
-    if (!is_target_tiny(this->prefix, tiny_int)) {
-        return false;
-    }
-
-    buffer.set_octet(this->encoding_offset, tiny_int);
-    this->encoding_offset++;
-
-    return true;
-}
-
-bool IntegerEncoder::encode_big_int(OctetArray& buffer, uint32_t target) {
-    // Do not accept tiny integers that fill 2^N - 1!
-    uint8_t tiny_int = target & ((1 << this->prefix) - 1);
-
-    if (is_target_tiny(this->prefix, tiny_int)) {
-        return false;
-    }
-
-    uint32_t temp_encoding_span = this->encoding_offset;
     uint32_t target_accumulator = target;
-    uint8_t temp_octet = 0U;
+    uint8_t prefix_mask = get_prefix_mask(prefix);
+    uint8_t temp_octet = 0;
 
-    /// @note Put filled prefix of larger integer first... reuse tiny_int because it's guaranteed to exceed 2^N - 1 by this point.
-    buffer.set_octet(temp_encoding_span, tiny_int);
-    temp_encoding_span++;
+    if (target < prefix_mask) {
+        temp_octet = target;
+        buffer.set_octet(0, temp_octet);        
+        encoding_count++;
 
-    // Put rest of target's encoding as octets
-    target_accumulator -= static_cast<uint32_t>(tiny_int);
+        return encoding_count;
+    }
 
-    while (target_accumulator >= 128U) {
-        temp_octet = (target_accumulator & HPACK_TERMINAL_TINY_INT) + HPACK_TERMINAL_TINY_INT;
-        buffer.set_octet(temp_encoding_span, temp_octet);
+    temp_octet = target_accumulator;
+    buffer.set_octet(encoding_count, temp_octet);
+    encoding_count++;
+
+    target_accumulator -= prefix_mask;
+
+    while (target_accumulator >= HPACK_TERMINAL_TINY_INT) {
+        if (encoding_count > buffer.get_length()) {
+            // Reject excessive octet counts in encoding to avoid buffer overflow.
+            encoding_count = 0U;
+            break;
+        }
+
+        temp_octet = HPACK_TERMINAL_TINY_INT | (target_accumulator & HPACK_INT_CHUNK_VALUE);
+
+        buffer.set_octet(encoding_count, temp_octet);
 
         target_accumulator /= HPACK_TERMINAL_TINY_INT;
-        temp_encoding_span++;
+
+        encoding_count++;
     }
 
-    // Encode last octet for integer...
-    tiny_int = target_accumulator & ((1 << 8) - 1U);
-    buffer.set_octet(temp_encoding_span, tiny_int);
-    temp_encoding_span++;
-
-    // Update total encoding span
-    this->encoding_offset = temp_encoding_span;
-
-    return false;
+    return encoding_count;
 }
 
 /* IntegerDecoder Impl. */
 
 IntegerDecoder::IntegerDecoder() {
-    this->encoding_offset = 0U;
-
+    decoding_offset = 0U;
+    prefix = 0U;
 }
 
 void IntegerDecoder::set_offset(uint32_t offset) {
-    this->encoding_offset = offset;
+    this->decoding_offset = offset;
 }
 
 void IntegerDecoder::set_prefix(uint8_t prefix_n) {
@@ -117,45 +96,48 @@ void IntegerDecoder::set_prefix(uint8_t prefix_n) {
 
 uint32_t IntegerDecoder::decode_int(const OctetArray& buffer) {
     uint32_t result = 0U;
-    uint32_t checked_tiny_int = this->decode_tiny_int(buffer);
+    uint8_t prefix_mask = get_prefix_mask(prefix);
+    uint8_t temp_chunk = buffer.get_octet(decoding_offset);
 
-    if (buffer.get_octet(this->encoding_offset) != 0 && checked_tiny_int == 0U) {
-        result = this->decode_big_int(buffer);
+    if (temp_chunk != prefix_mask) {
+        /// @note Handles 1 octet integers where no additional chunks need to be decoded!
+        result = temp_chunk & prefix_mask;
+        decoding_offset++;
+        return result;
+    }
+
+    uint8_t temp_octet = 0; // raw octet from buffer
+    uint32_t chunk_count = 0U;
+    uint32_t multiplier = 1; // power of 2 to multiply with result accumulator term
+    result = temp_chunk & prefix_mask;
+    decoding_offset++;
+
+    while (decoding_offset < buffer.get_length() && chunk_count <= HPACK_MAX_INT_OCTETS) {
+        temp_octet = buffer.get_octet(decoding_offset);
+        temp_chunk = HPACK_INT_CHUNK_VALUE & temp_octet;
+
+        result += temp_chunk * multiplier;
+
+        if ((temp_octet & HPACK_TERMINAL_TINY_INT) == 0) {
+            /// @note Handle flag 0 of encoding chunk as END so that H(un)PACK is correct.
+            decoding_offset++;
+            chunk_count++;
+            break;
+        }
+
+        if ((multiplier << 7) < multiplier) {
+            // Handle overflowing multiplier with decoding error.
+            result = 0U;
+            break;
+        }
+
+        multiplier <<= 7;
     }
 
     return result;
 }
 
 void IntegerDecoder::reset() {
-    this->set_offset(0U);
-    this->set_prefix(0U);
-}
-
-/* IntegerDecoder Private Impl. */
-
-uint32_t IntegerDecoder::decode_tiny_int(const OctetArray& buffer) {
-    uint8_t tiny_int = buffer.get_octet(this->encoding_offset);
-    tiny_int &= ((1 << this->prefix) - 1);
-
-    if (!is_target_tiny(this->prefix, tiny_int)) {
-        return 0U;
-    }
-
-    this->encoding_offset++;
-
-    return tiny_int;
-}
-
-uint32_t IntegerDecoder::decode_big_int(const OctetArray& buffer) {
-    uint32_t int_accumulator = 0U;
-    uint32_t main_bit_count = 0U;
-    uint8_t temp_octet = 0;
-
-    do {
-        temp_octet = buffer.get_octet(this->encoding_offset);
-        int_accumulator += (temp_octet & 127) * (1 << main_bit_count);
-        main_bit_count += 7U;
-    } while (temp_octet & HPACK_TERMINAL_TINY_INT == HPACK_TERMINAL_TINY_INT);
-
-    return int_accumulator;
+    set_offset(0U);
+    set_prefix(0U);
 }

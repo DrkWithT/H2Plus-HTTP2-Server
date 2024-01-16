@@ -4,14 +4,12 @@
 #include "utils/octarr.hpp"
 
 /**
- * @brief Helper function to determine if an encoded integer is a tiny integer, specifically if it fits in an n-bit prefix. 
+ * @brief Helper function to generate a first octet bitmask for HPACK encoded integers.
  * 
- * @param prefix_n 
- * @param head_octet 
- * @return true 
- * @return false 
+ * @param prefix_n  
+ * @returns int8_t
  */
-constexpr bool is_target_tiny(uint8_t prefix_n, uint8_t head_octet);
+constexpr uint8_t get_prefix_mask(uint8_t prefix_n);
 
 /**
  * @brief Encodes integer values in HPACK encoding.
@@ -19,10 +17,7 @@ constexpr bool is_target_tiny(uint8_t prefix_n, uint8_t head_octet);
 class IntegerEncoder {
 private:
     uint32_t prefix;        // stores bit count of integer prefix
-    uint32_t encoding_offset; // stores total offset of octets from start of overall encoding
-
-    bool encode_tiny_int(OctetArray& buffer, uint32_t target);
-    bool encode_big_int(OctetArray& buffer, uint32_t target);
+    uint32_t encoding_count; // stores total offset of octets from start of overall encoding
 public:
     IntegerEncoder();
     void set_prefix(uint32_t prefix_n);
@@ -36,13 +31,8 @@ public:
  */
 class IntegerDecoder {
 private:
-    uint32_t encoding_offset;  // offset from overall encoding in octets
-    uint16_t bit_count;      // bit count in decoded value
-    uint16_t bit_limit;      // bit count maximum of decoded value
+    uint32_t decoding_offset;  // offset from 1st octet in decoding
     uint8_t prefix;          // N-bit prefix of integer to decode
-
-    uint32_t decode_tiny_int(const OctetArray& buffer);
-    uint32_t decode_big_int(const OctetArray& buffer);
 public:
     IntegerDecoder();
     void set_offset(uint32_t offset);
