@@ -41,9 +41,11 @@ int main() {
         return 1;
     }
 
-    std::cout << "Original: " << text1 << '\n';
-    std::cout << "Encoded then Decoded: " << text2 << '\n';
-    std::cout << "Decoded text equals original text?\n" << (text1 == text2) << std::endl;
+    if (text1 != text2)
+    {
+        std::cerr << "Decoder failed: incorrect text1 vs. expected text2." << std::endl;
+        return 1;
+    }
 
     return 0;
 }

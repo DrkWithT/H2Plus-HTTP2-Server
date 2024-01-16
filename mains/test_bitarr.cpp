@@ -9,6 +9,8 @@
 #include <string>
 #include <iostream>
 
+constexpr int32_t TESTED_OCTET_BITS = 8;
+
 int main () {
     std::string text_blob {"ABCD"};
     const size_t text_blob_len = text_blob.size();
@@ -25,8 +27,9 @@ int main () {
     // Test length() method!
     const int32_t text_bits_length = text_bits.length();
 
-    if (text_bits_length != OCTET_BITS * static_cast<int32_t>(text_blob_len)) {
+    if (text_bits_length != TESTED_OCTET_BITS * static_cast<int32_t>(text_blob_len)) {
         std::cerr << "Incorrect length found vs 8 * text_blob_len: " << text_bits_length << '\n';
+        return 1;
     }
 
     // Test at() method!

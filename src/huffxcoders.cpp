@@ -9,6 +9,7 @@
 
 constexpr uint32_t HUFFCODE_PAIR_COUNT = 256U;
 constexpr size_t HPACK_TEXT_MAX_LEN = 1UL << 16;
+constexpr uint32_t HUFFCODE_OCTET_BITS = 8U;
 
 /* HuffmanEncoder Impl. */
 
@@ -49,7 +50,7 @@ uint32_t HuffmanEncoder::encode(BitArray& result, const std::string& text) {
     uint32_t padding_count = 8U - (encode_count & 7U);
 
     /// @note If encode_count is on an octet boundary, place padding of 1's until so. This caps an "EOS" symbol (all ones) to the Huffman encoded bitstring.
-    if (padding_count != OCTET_BITS) {
+    if (padding_count != HUFFCODE_OCTET_BITS) {
         for (uint32_t eos_i = 0U; eos_i < padding_count; eos_i++) {
             if (!result.append(true)) {
                 encode_count = 0U;
@@ -94,7 +95,7 @@ bool HuffmanDecoder::decode(std::string& result, const OctetArray& raw_octets) {
         return false;
     }
 
-    BitArray result_bitstr {OCTET_BITS * data_length};
+    BitArray result_bitstr {HUFFCODE_OCTET_BITS * data_length};
     bool curr_bit = false;
     bool decode_ok = true;
 
