@@ -42,7 +42,5 @@ int main() {
         return 1;
     }
 
-    std::cout << "Test OK!" << std::endl;
-
     return 0;
 }

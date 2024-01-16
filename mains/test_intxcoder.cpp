@@ -18,8 +18,8 @@ int main() {
     OctetArray bigger_int_buffer {};
 
     // Define test inputs
-    uint32_t tiny_int = 16U;
-    uint32_t bigger_int = 100U;
+    uint32_t tiny_int = 10U;
+    uint32_t bigger_int = 1337U;
     uint32_t prefix = 5U;
 
     // Encode and decode tinier integer within 5 bit prefix... check results!
@@ -31,8 +31,10 @@ int main() {
         return 1;
     }
 
-    if (decoder.decode_int(tiny_int_buffer) != tiny_int) {
-        std::cerr << "IntegerDecoder gave invalid decoded value from tiny_int_buffer." << std::endl;
+    uint32_t temp = decoder.decode_int(tiny_int_buffer);
+
+    if (temp != tiny_int) {
+        std::cerr << "IntegerDecoder gave invalid decoded value from tiny_int_buffer: " << temp << std::endl;
         return 1;
     }
 
@@ -42,17 +44,17 @@ int main() {
     encoder.set_prefix(prefix);
     decoder.set_prefix(prefix);
 
-    if (encoder.encode_int(bigger_int_buffer, bigger_int) != 2U) {
+    if (encoder.encode_int(bigger_int_buffer, bigger_int) != 3U) {
         std::cerr << "IntegerEncoder gave invalid encoding offset for bigger_int." << std::endl; 
         return 1;
     }
 
-    if (decoder.decode_int(bigger_int_buffer) != bigger_int) {
-        std::cerr << "IntegerDecoder gave invalid decoded value from bigger_int_buffer." << std::endl; 
+    temp = decoder.decode_int(bigger_int_buffer);
+
+    if (temp != bigger_int) {
+        std::cerr << "IntegerDecoder gave invalid decoded value from bigger_int_buffer: " << temp << std::endl;
         return 1;
     }
-
-    std::cout << "Test OK!" << std::endl;
 
     return 0;
 }
