@@ -8,7 +8,8 @@ A simple HTTP/2 cleartext server made with C++. The purpose of this project is t
 <img width="500" src="./imgs/H2Plus_Server_HPACK_Test1.png">
 
 ### Notes
- - Only works on Unix-y systems because of the GNU Makefile.
+ - Ensure that the `openssl` library headers are installed on the your system.
+ - Windows is unsupported because of the GNU Makefile.
  - Create the bin and build folder at the project root for the build to work.
  - Files in mains with names such as `test_*` are the unit tests.
 
@@ -31,4 +32,6 @@ A simple HTTP/2 cleartext server made with C++. The purpose of this project is t
  11. Test with cURL.
 
 ### Other Notes:
- - Probably install and use the `s2n` SSL library because openssl is verbose.
+ - Use the [OpenSSL](https://www.openssl.org/docs/man3.0/man7/ssl.html) library headers:
+  - `openssl/ssl.h` for secure sockets
+  - `openssl/x509.h` for certificate loading
