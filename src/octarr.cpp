@@ -81,12 +81,11 @@ OctetArray& OctetArray::operator=(const OctetArray& other) {
     }
 
     int32_t other_capacity = other.get_length();
+    const uint8_t* other_buffer = other.get_octets();
     uint8_t* new_buffer = new uint8_t[other_capacity];
 
     if (new_buffer != nullptr) {
-        for (int i = 0; i < other_capacity; i++) {
-            new_buffer[i] = other.get_octet(i);
-        }
+        std::copy_n(other_buffer, other_capacity, new_buffer);
 
         this->octets = new_buffer;
         this->length = other.get_length();
@@ -137,7 +136,5 @@ uint8_t OctetArray::get_octet(uint32_t index) const {
 }
 
 void OctetArray::set_octet(uint32_t index, uint8_t value) {
-    if (index >= 0 && index < this->get_length()) {
-        this->octets[index] = value;
-    }
+    this->octets[index] = value;
 }
